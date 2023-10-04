@@ -2,6 +2,7 @@
 # Reads options from txt files
 
 import os
+import re
 from typing import Callable
 
 here = os.path.dirname(__file__)
@@ -12,16 +13,15 @@ supported_formats = ["psd", "png", "tga", "jpg"]
 
 #Default arguments
 defaults = {
-    "maxwidth": "-rwidth 512",
-    "maxheight": "-rheight 512"
+    #"maxwidth": "rwidth 512"
 }
 
 #Arg Mapping
 # Add new ones below 🔽🔽
 # {} is where the data is put (e.g. -rclampwidth 512)
 arg_mapping: dict[str, str] = {
-    "maxwidth": "rclampwidth {}",
-    "maxheight": "rclampheight {}",
+    "maxwidth": "rwidth {}",
+    "maxheight": "rheight {}",
     "srgb": "srgb",
     "dxt5": "format DXT5",
     "nomip": "nomipmaps",
@@ -67,6 +67,21 @@ def SupportedFile(filepath: str) -> bool:
 
 def ProcessFiles():
     files_to_process: dict[str, str] = {}
+
+    # Verify in dir exists or ask for alt dir
+    global _in
+    if not os.path.exists(_in):
+        print("Enter input path:")
+        new_in = input()
+        if not os.path.exists(new_in):
+            new_in = os.path.join(here, new_in)
+            if not os.path.exists(new_in):
+                print("ERROR: provided input path cannot be found")
+                exit(1)
+        
+        _in = new_in
+
+    print(f"Looking for files in '{_in}'")
     for file in os.listdir(_in):
         file = file.lower()
         if SupportedFile(file):
@@ -139,6 +154,13 @@ def ProcessFile(filepath: str, args: list[str]):
     #Add other arguments
     for arg in args:
         vtfcmdcmd += " " + arg
+
+    # Add resize arg if required
+    if(len(re.findall("(rwidth)|(rheight)", vtfcmdcmd)) != 0):
+        vtfcmdcmd += " -resize"
+
+    if not os.path.exists(_out):
+        os.mkdir(_out)
 
     print("> " + vtfcmdcmd)
     result = os.system(vtfcmdcmd)
