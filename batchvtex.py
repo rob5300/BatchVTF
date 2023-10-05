@@ -20,6 +20,10 @@ def ProcessFiles():
     game = path.normpath(path.join(gameinfo, "..", ".."))
     vtex = path.join(game, "bin", "vtex.exe")
 
+    if not path.exists(content):
+        print(f"Content path '{content}' does not exist? Aborting.")
+        exit(1)
+
     to_compile = []
     for ext in supported_formats:
         to_compile.extend(glob.glob("./**/*." + ext, root_dir=content, recursive=True))
