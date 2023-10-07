@@ -1,4 +1,5 @@
 # Batch VTEX compile
+#  Compiles images in a content dir using vtex, will output in same relative game dir.
 # https://github.com/rob5300
 
 import os
@@ -22,8 +23,7 @@ def GetGameInfoPath(dir):
 def ProcessFiles():
     gameinfo = GetGameInfoPath(here)
     while not path.exists(gameinfo) and not path.exists(path.join(gameinfo, "gameinfo.txt")):
-        print("Enter valid path where gameinfo.txt exists:")
-        gameinfo = input()
+        gameinfo = input("Enter valid path where gameinfo.txt exists:")
 
     content = path.normpath(path.join(gameinfo, "..", "..", "content"))
     game = path.normpath(path.join(gameinfo, ".."))
@@ -39,13 +39,22 @@ def ProcessFiles():
 
     print(f">>> 🔍 Found {len(to_compile)} files to process")
 
+    error_files: list[str] = []
     for file in to_compile:
         if len(re.findall(ignored_files_regex, file, flags=re.IGNORECASE)) == 0:
-            ProcessFile(vtex, gameinfo, content, game, file)
+            result = ProcessFile(vtex, gameinfo, content, game, file)
+            if result != 0:
+                error_files.append(file)
         else:
             print(f">>> Skipped {file} due to ignore expression")
+
+    print(f"\n>>> ✓ {len(to_compile) - len(error_files)} files compiled! ✓ <<<")
+    if len(error_files) != 0:
+        print(f">>> ❌ Files that did not compile ({len(error_files)}) ❌ <<<")
+        for f in error_files:
+            print(f)
     
-def ProcessFile(vtex: str, gameinfo: str, content: str, game: str, file: str):
+def ProcessFile(vtex: str, gameinfo: str, content: str, game: str, file: str) -> int:
     outdir = path.normpath(path.join(game, file, ".."))
     vtexcmd = f"{vtex} -game {gameinfo} -outdir {outdir} -nopause {path.normpath(path.join(content, file))}"
 
@@ -58,7 +67,10 @@ def ProcessFile(vtex: str, gameinfo: str, content: str, game: str, file: str):
         print(f">>> ❌ Failed when executing VTFCmd, Code: {result}")
     else:
         print(f">>> ✓ Success processing '{file}'!")
+    return result
 
+# Read args to change here path and change pause behaviour
+pause = True
 if len(sys.argv) > 1:
     here = sys.argv[1]
     if not path.exists(here):
@@ -68,4 +80,12 @@ if not path.exists(here):
     print(f"Given dir '{here}' does not exist")
     exit(1)
 
+if "-nopause" in sys.argv:
+    pause = False
+
 ProcessFiles()
+if pause:
+    if os.name == "nt":
+        os.system("pause")
+    else:
+        input("Press Enter to quit...")
