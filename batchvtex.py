@@ -2,10 +2,16 @@ import os
 from os import path
 import glob
 import sys
+import re
 
+# Default start dir
 here = os.path.dirname(__file__)
 
+#Supported file extensions
 supported_formats = ["psd", "tga"]
+
+#Regex to filter out dis allowed files
+ignored_files_regex = r"(\\work)|(\\[a-z]*_gitblock)"
 
 def GetGameInfoPath(dir):
     return path.join(dir, "game", "tf")
@@ -31,7 +37,10 @@ def ProcessFiles():
     print(f">>> 🔍 Found {len(to_compile)} files to process")
 
     for file in to_compile:
-        ProcessFile(vtex, gameinfo, content, game, file)
+        if len(re.findall(ignored_files_regex, file, flags=re.IGNORECASE)) == 0:
+            ProcessFile(vtex, gameinfo, content, game, file)
+        else:
+            print(f">>> Skipped {file} due to ignore expression")
     
 def ProcessFile(vtex: str, gameinfo: str, content: str, game: str, file: str):
     outdir = path.normpath(path.join(game, file, ".."))
@@ -43,7 +52,7 @@ def ProcessFile(vtex: str, gameinfo: str, content: str, game: str, file: str):
         result = os.waitstatus_to_exitcode(result)
     
     if result != 0:
-        raise Exception(f">>> ❌ Failed when executing VTFCmd, Code: {result}")
+        print(f">>> ❌ Failed when executing VTFCmd, Code: {result}")
     else:
         print(f">>> ✓ Success processing '{file}'!")
 
