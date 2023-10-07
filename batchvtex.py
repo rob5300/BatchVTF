@@ -1,3 +1,6 @@
+# Batch VTEX compile
+# https://github.com/rob5300
+
 import os
 from os import path
 import glob
