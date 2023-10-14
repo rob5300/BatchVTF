@@ -35,7 +35,7 @@ def ProcessFiles():
 
     to_compile: set[str] = set()
     for ext in supported_formats:
-        to_compile.update(glob.glob("./**/*." + ext, root_dir=content, recursive=True))
+        to_compile.update(glob.glob("./**/materials/**/*." + ext, root_dir=content, recursive=True))
 
     print(f">>> 🔍 Found {len(to_compile)} files to process")
 
